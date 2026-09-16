@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "assets": {
+    "components/modern_start_menu_ui/assets/start_menu_icons.png": {
+      "sha256": "d2382dad3b896b85bb26d80eeea91f9686c60229672583c4fb1e4f2089f871ac",
+      "license": "CC0-1.0 + MIT (original generic team symbol)",
+      "source": "https://nikoichu.itch.io/pixel-icons",
+      "notice": "THIRD_PARTY_NOTICES.md"
+    }
+  }
+}

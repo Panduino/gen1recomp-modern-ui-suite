@@ -33,7 +33,6 @@ return {
     installOrder = 1,
     files = { "main.lua", "screen.lua", "inventory.lua", "gen2.lua", "gen2_presentation.lua", "pockets.lua", "sorting.lua" },
     legacyExtras = { "pocket_order" },
-    assets = { "assets/classic_bag_pockets.png" },
   },
   {
     id = "modern_pc_ui",

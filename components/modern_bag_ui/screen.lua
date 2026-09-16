@@ -90,8 +90,8 @@ return function(mod, compatibility)
     berries = "Berries",
   }
 
-  -- The extracted reference backpack has five real compartments. All is a
-  -- combined view; the remaining five categories each own one sprite region.
+  -- The original geometric organiser has five slots. All is a combined
+  -- view; the remaining categories each highlight one slot.
   -- Battle enhancers stay in Items so the navigation and artwork are 1:1.
   local CLASSIC_BAG_REGIONS = {
     all = "all",
@@ -101,10 +101,9 @@ return function(mod, compatibility)
     machines = "machines",
     key = "key",
     -- Kanto's Berry pocket uses the backpack's medicine compartment; both
-    -- configurations therefore keep a five-compartment sprite.
+    -- configurations therefore keep a five-slot organiser.
     berries = "medicine",
   }
-  local CLASSIC_BAG_ASSET = mod.path .. "/assets/classic_bag_pockets.png"
 
   local MEDICINE = {
     POTION = true, SUPER_POTION = true, HYPER_POTION = true,
@@ -168,7 +167,6 @@ return function(mod, compatibility)
   }
 
   local inkShader -- false when shaders are unavailable
-  local classicBagSprites -- false when the source sprite cannot be loaded
 
   local function gray(value)
     love.graphics.setColor(value, value, value, 1)
@@ -1633,83 +1631,33 @@ return function(mod, compatibility)
     }
   end
 
-  local function classicBagRegionAt(x, y)
-    -- The reference screenshot is in Items and visibly selects the left-side
-    -- compartment. Continue from there through the main and two front pockets
-    -- before ending at the right-side Key Items compartment.
-    if x >= 4 and x <= 5 and y >= 8 and y <= 18 then return "items" end
-    if x >= 12 and x <= 21 and y >= 2 and y <= 10 then return "medicine" end
-    if x >= 12 and x <= 21 and y >= 12 and y <= 13 then return "balls" end
-    if x >= 12 and x <= 21 and y >= 15 and y <= 17 then return "machines" end
-    if x >= 27 and x <= 28 and y >= 9 and y <= 18 then return "key" end
-  end
-
-  local function loadClassicBagSprites()
-    if classicBagSprites ~= nil then return classicBagSprites or nil end
-    if not (love.image and love.image.newImageData
-        and love.graphics and love.graphics.newImage) then
-      classicBagSprites = false
-      return nil
-    end
-
-    local sprites = {}
-    local spritePockets = {}
-    for _, pocket in ipairs(POCKETS) do spritePockets[#spritePockets + 1] = pocket end
-    for _, pocket in ipairs(KANTO_POCKETS) do
-      spritePockets[#spritePockets + 1] = pocket
-    end
-    for _, pocket in ipairs(spritePockets) do
-      local okData, data = pcall(Assets.imageData, CLASSIC_BAG_ASSET)
-      if not okData or not data or not data.mapPixel then
-        classicBagSprites = false
-        return nil
-      end
-      data:mapPixel(function(x, y, r, g, b, a)
-        local region = classicBagRegionAt(x, y)
-        local active = region
-          and (CLASSIC_BAG_REGIONS[pocket.key] or pocket.key) == region
-
-        -- The source screenshot shows its left pocket selected. Neutralize
-        -- that fill first, then apply the same black fill as every other
-        -- selected compartment so all five states behave consistently.
-        if region == "items" and r < 0.17 then
-          local shade = active and BLACK or WHITE
-          return shade, shade, shade, a
-        end
-        if active and r > 0.83 and g > 0.83 and b > 0.83 then
-          return BLACK, BLACK, BLACK, a
-        end
-        return r, g, b, a
-      end)
-      local okImage, image = pcall(love.graphics.newImage, data)
-      if not okImage or not image then
-        classicBagSprites = false
-        return nil
-      end
-      if image.setFilter then image:setFilter("nearest", "nearest") end
-      sprites[pocket.key] = image
-    end
-    classicBagSprites = sprites
-    return sprites
-  end
-
   local function drawClassicPocketBag(key, x, y, width, height)
-    local sprites = loadClassicBagSprites()
-    local sprite = sprites and (sprites[key] or sprites.all)
-    if sprite and love.graphics.draw then
-      local sw, sh = sprite:getDimensions()
-      gray(WHITE)
-      love.graphics.draw(sprite,
-        math.floor(x + (width - sw) / 2),
-        math.floor(y + (height - sh) / 2))
-      return true
+    -- Original geometric organiser: a handle, outline and five slots.
+    -- Draw commands contain no sampled, traced or encoded game artwork.
+    local scale = math.min(1, width / 30, height / 30)
+    local ox = math.floor(x + (width - 30 * scale) / 2)
+    local oy = math.floor(y + (height - 30 * scale) / 2)
+    local function rect(shade, rx, ry, rw, rh)
+      gray(shade)
+      love.graphics.rectangle("fill", ox + rx * scale, oy + ry * scale,
+        rw * scale, rh * scale)
     end
-
-    -- Headless tests and damaged installs still receive a safe fallback.
-    local size = math.min(26, height - 8, width - 8)
-    drawPocketSymbol("all", x + math.floor((width - size) / 2),
-      y + math.floor((height - size) / 2), size)
-    return false
+    rect(BLACK, 10, 0, 10, 5)
+    rect(WHITE, 12, 2, 6, 3)
+    rect(BLACK, 2, 4, 26, 26)
+    rect(WHITE, 3, 5, 24, 24)
+    local selected = CLASSIC_BAG_REGIONS[key] or key
+    local slots = {
+      { "items", 5, 7, 9, 7 }, { "medicine", 16, 7, 9, 7 },
+      { "balls", 5, 16, 9, 7 }, { "machines", 16, 16, 9, 7 },
+      { "key", 5, 25, 20, 3 },
+    }
+    for _, slot in ipairs(slots) do
+      rect(BLACK, slot[2], slot[3], slot[4], slot[5])
+      rect(selected == slot[1] and BLACK or WHITE,
+        slot[2] + 1, slot[3] + 1, slot[4] - 2, slot[5] - 2)
+    end
+    return true
   end
 
   local function drawClassicRail(menu, layout)

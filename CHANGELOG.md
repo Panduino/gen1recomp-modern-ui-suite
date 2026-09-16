@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.32 — 2026-09-16
+
+- Replace screenshot-derived backpack pixels with an original procedural organiser.
+- Remove game screenshots from source and enforce reviewed assets in repository and release checks.
+
 ## [0.1.31] - 2026-09-12
 
 - Publish the complete Highlander QoL integration from the local 0.1.29/0.1.30

@@ -288,9 +288,7 @@ icons share the native level row and use the same position in every drawing
 pass. Keep **Battle HUD → HUD ENABLED** On for these additions; Off restores
 the provider's own HUD. Verified with Battle Art 1.10.1 and Gender Mod 0.3.6.
 
-![Gen 1 wide battle HUD](screenshots/gen1-wide-hud.png)
 
-![Gen 1 Battle Art HUD](screenshots/gen1-battle-art-hud.png)
 
 The separate white move-details window labelled like `NOR P35` belongs to
 **Move Inspector**, which is listed under QOL. Disable that mod to remove its
