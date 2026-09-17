@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.33 — 2026-09-17 (local preview)
+## 0.1.33 — 2026-09-17
 
 - Display G9 Battle Sprites in the modern Pokédex index and entry pages,
   including species added by National Dex. Retain animation and authored

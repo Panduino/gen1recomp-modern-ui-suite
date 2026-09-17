@@ -1,4 +1,4 @@
-# 0.1.33 (local preview)
+# 0.1.33
 
 - Fix missing large Pokédex portraits with National Dex and G9 Battle Sprites.
   The index and entry pages use the installed provider's animated images.
