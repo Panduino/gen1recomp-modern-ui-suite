@@ -164,6 +164,14 @@ animation. The shared rectangle keeps framing stable as the Pokémon moves.
 
 **Party → Icon Source** controls the small icons in Party and PC menus.
 The hub’s **Sprite Info** explains portrait choices and provider fallbacks.
+
+The Pokédex also supports **National Dex + G9 Battle Sprites**, using the
+companion's installed front artwork for both the index and entry pages.
+Use game **0.2.61**, enable the provider's **DEX SPRITES**, and choose
+**BATTLE ART** (fallback when Battle Art has no picture) or **DEFAULT**.
+The provider controls animation. **CRYSTAL** keeps its explicit priority.
+No companion artwork is included in this mod. Gen 1 ADVANCED and Gen 2 GBC
+colours preserve RGB artwork; authentic palette modes still remap colours.
 Small-icon choices are:
 
 - **AUTO** (default): use the installed mods' icon handling.

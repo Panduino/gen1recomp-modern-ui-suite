@@ -1,7 +1,7 @@
 {
   "id": "modern_ui_suite",
   "name": "Modern UI Suite",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "api": 2,
   "games": [
     "gen1",
@@ -39,7 +39,9 @@
     "useful_move_info",
     "gen3_battle_ui",
     "potato_voxel",
-    "STADIUM2_IMPORTER"
+    "STADIUM2_IMPORTER",
+    "national_dex",
+    "g9-battle-sprites"
   ],
   "conflicts": [
     "modern_start_menu_ui",

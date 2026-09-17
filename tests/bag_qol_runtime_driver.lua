@@ -91,7 +91,8 @@ return function(game)
   game.data.items.ANTIDOTE.description = "Cures poison."
   game.save.inventory = {}
   game.save.bagOrder = nil
-  game.save.money = 999999
+  if generation == 2 then game.save.player.money = 999999
+  else game.save.money = 999999 end
   check(Bag.add(game.save, "POTION", 7, game.data), "POTION is seeded")
   check(Bag.add(game.save, "ANTIDOTE", 3, game.data), "ANTIDOTE is seeded")
 

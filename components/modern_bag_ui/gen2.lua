@@ -114,7 +114,9 @@ return function(mod, shared)
 
   local function moneyText(menu)
     local save = menu and (menu.save or (menu.game and menu.game.save))
-    return ("¥%d"):format((save and tonumber(save.money)) or 0)
+    -- Gen 2's Trainer Card and shops use player.money; save.money is Gen 1.
+    local player = save and save.player
+    return ("¥%d"):format((player and tonumber(player.money)) or 0)
   end
 
   local function chamfer(mode, x, y, w, h, cut)
@@ -690,6 +692,7 @@ return function(mod, shared)
     presentation = assert(load(assert(mod:read("gen2_presentation.lua")),
       "@" .. mod.path .. "/gen2_presentation.lua"))()(mod, {
       category = categoryFor, order = orderedBagIds, labels = SUBMENU_LABEL,
+      moneyText = moneyText,
     })
   end
 

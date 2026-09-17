@@ -18,7 +18,8 @@ return function(game)
     check(not love.window.hasFocus() and love.audio.getVolume()==0,'muted and unfocused')
   end
   local function clear()while game.stack:top() do game.stack:pop() end end
-  game.save.inventory={};game.save.bagOrder=nil;game.save.money=999999
+  game.save.inventory={};game.save.bagOrder=nil
+  if gen2 then game.save.player.money=999999 else game.save.money=999999 end
   local seed={'POTION','ANTIDOTE','SUPER_POTION','HYPER_POTION','REVIVE','FULL_HEAL','RARE_CANDY','REPEL','ESCAPE_ROPE','FIRE_STONE','NUGGET','POKE_BALL','GREAT_BALL','BICYCLE','OLD_ROD'}
   for _,id in ipairs(seed)do check(Bag.add(game.save,id,7,game.data),'seeded '..id)end
   local tm

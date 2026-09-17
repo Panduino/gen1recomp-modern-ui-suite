@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.33 — 2026-09-17 (local preview)
+
+- Display G9 Battle Sprites in the modern Pokédex index and entry pages,
+  including species added by National Dex. Retain animation and authored
+  colours, respect the provider's Dex switch, and avoid placeholder flashes
+  while its frames are being built. Requires installed artwork and a game
+  runtime with the provider's update hook (tested on 0.2.61).
+- Preserve true-colour pictures supplied by native Gen 2 Pokédex adapters.
+- Include the previously unpublished Bag fixes: show the actual Gen 2 wallet
+  balance and draw a connected, readable key pocket icon at compact sizes.
+- Retain 0.1.32's original artwork and distribution checks.
+
 ## 0.1.32 — 2026-09-16
 
 - Replace screenshot-derived backpack pixels with an original procedural organiser.

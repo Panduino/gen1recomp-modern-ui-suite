@@ -215,12 +215,11 @@ local itemDefs = {
     teaches = "ALPHA", description = "Teach Alpha." },
 }
 local save = {
-  money = 999999,
   inventory = {
     ESCAPE_ROPE = 1, POTION = 4, ANTIDOTE = 2, NUGGET = 1,
     POKE_BALL = 12, BICYCLE = 1, TM_Z = 1, TM_A = 1,
   },
-  player = { name = "GOLD" },
+  player = { name = "GOLD", money = 999999 },
 }
 save.bagOrder = { "POTION", "ESCAPE_ROPE", "POKE_BALL", "BICYCLE",
   "TM_Z", "ANTIDOTE", "NUGGET", "TM_A" }
@@ -376,6 +375,15 @@ menu.index = 1
 menu:drawPanel()
 eq(menu:modernBagQolInfo().headerCash, "¥999999",
   "Pocket skin also replaces its header label with exact money")
+for _, amount in ipairs({0, 13000, 12800}) do
+  save.player.money = amount
+  save.money = 42 -- an unrelated Gen 1 field must never override Gen 2's wallet
+  menu:drawPanel()
+  eq(menu:modernBagQolInfo().headerCash, "¥" .. amount,
+    "Pocket header tracks the native wallet at " .. amount)
+  eq(save.player.money, amount, "drawing preserves the native balance")
+  eq(save.money, 42, "drawing does not rewrite the unrelated field")
+end
 
 if failed > 0 then
   error(("%d of %d Gen 2 Bag parity checks failed"):format(failed, total), 0)

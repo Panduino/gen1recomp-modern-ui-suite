@@ -896,9 +896,12 @@ return function(mod, compatibility)
 
   local function spriteFor(game, def)
     if not def then return nil, false end
-    local selected = mod.suite and mod.suite.battlePortrait
-      and mod.suite.battlePortrait(game, def.id)
+    local selected, pending
+    if mod.suite and mod.suite.battlePortrait then
+      selected, pending = mod.suite.battlePortrait(game, def.id, true, "dex")
+    end
     if selected then return selected, true end
+    if pending then return nil, false end
     -- Deliberately ask for the battle presentation. Sprite selectors are
     -- allowed to vary by context; the Pokedex must show the exact front art
     -- the player will meet in battle, not a separate dex-only fallback.

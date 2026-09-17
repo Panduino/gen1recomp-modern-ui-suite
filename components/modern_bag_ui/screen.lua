@@ -220,6 +220,7 @@ return function(mod, compatibility)
   end
 
   local function moneyText(menu)
+    if compatibility.moneyText then return compatibility.moneyText(menu) end
     local save = menu and menu.game and menu.game.save
     return ("¥%d"):format((save and tonumber(save.money)) or 0)
   end
@@ -1021,7 +1022,7 @@ return function(mod, compatibility)
     return counts
   end
 
-  local function drawPocketSymbol(key, x, y, size, active)
+  local function drawPocketSymbol(key, x, y, size, active, onLight)
     x, y, size = math.floor(x), math.floor(y), math.max(8, math.floor(size))
     local unit = math.max(1, math.floor(size / 8))
     if key == "all" then
@@ -1095,12 +1096,23 @@ return function(mod, compatibility)
       gray(BLACK)
       love.graphics.circle("fill", x + size / 2, y + size / 2, unit)
     elseif key == "key" then
-      gray(LIGHT)
-      love.graphics.circle("line", x + 2 * unit, y + 2 * unit, 2 * unit)
-      love.graphics.rectangle("fill", x + 3 * unit, y + 3 * unit,
-        size - 3 * unit, 2 * unit)
-      love.graphics.rectangle("fill", x + 6 * unit, y + 5 * unit,
-        2 * unit, 2 * unit)
+      gray(onLight and DARK or LIGHT)
+      -- Keep the bow, shaft and teeth on the same pixel grid at tab and
+      -- detail-card sizes. A fixed-width circle outline became a hairline
+      -- next to the enlarged shaft, making the key look broken.
+      local pixels = {
+        ".###....", "##.##...", "#...#...", "##.#####",
+        ".#######", ".....#.#", ".....#.#", "........",
+      }
+      local inset = math.floor((size - 8 * unit) / 2)
+      for row, line in ipairs(pixels) do
+        for col = 1, #line do
+          if line:sub(col, col) == "#" then
+            love.graphics.rectangle("fill", x + inset + (col - 1) * unit,
+              y + inset + (row - 1) * unit, unit, unit)
+          end
+        end
+      end
     elseif key == "berries" then
       gray(LIGHT)
       love.graphics.circle("fill", x + size / 2, y + size / 2 + unit,
@@ -1361,7 +1373,7 @@ return function(mod, compatibility)
       local category = item and categoryFor(menu.game, item.value) or pocket.key
       local iconSize = math.min(28, math.max(20, layout.detailH - 56))
       drawPocketSymbol(category, layout.detailX + 8, layout.detailY + 20,
-        iconSize)
+        iconSize, false, true)
       local textX = layout.detailX + iconSize + 14
       local textW = layout.detailX + layout.detailW - 6 - textX
       local name = item and item.label

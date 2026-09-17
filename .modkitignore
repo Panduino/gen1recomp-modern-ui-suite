@@ -129,3 +129,6 @@ tests/pc_aspect_navigation_driver.lua
 tests/party_exp_summary_driver.lua
 tests/expanded_boxes_test.lua
 tests/expanded_boxes_driver.lua
+tests/bag_reports_driver.lua
+tests/national_dex_portraits_test.lua
+tests/national_dex_portraits_driver.lua

@@ -17,6 +17,7 @@ return function(mod, source)
   local owner
   local api=assert(load(assert(mod:read('screen.lua')),'@'..mod.path..'/screen.lua'))()(mod,{
     presentationSize=function(state) return state.width,state.height end,
+    moneyText=function(state) return source.moneyText(state.nativeBag) end,
     categoryFor=function(_,id) return category[source.category(owner,id)] or 'items' end,
     capacity=function(state)
       -- Four physical pockets retain their native capacities; All reports

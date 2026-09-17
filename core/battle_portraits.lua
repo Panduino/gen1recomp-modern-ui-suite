@@ -260,17 +260,36 @@ return function(mod)
         return image(cell)
       end)
   end
-  local function resolve(game, subject, animate)
+  local function g9Dex(game, mon)
+    local id = "g9-battle-sprites"
+    if not (mod.find and mod.find(id)) or mon.species == "UNOWN" then return nil end
+    local options = game.mods and game.mods.modOptions and game.mods.modOptions[id] or {}
+    if options.enable_battle_sprites == false or options.dex_sprites == false then return nil end
+    -- G9 bakes its sheets into Images asynchronously, so pokemon.sprite's
+    -- path-only API cannot supply them to our custom Dex renderer. Use its
+    -- public picture hook, with the same default front box as its native Dex.
+    -- A fresh species-only subject keeps the entry's default form/colour.
+    local picture = require("src.mods.Runtime").call("battle.mon_pic",
+      function(value) return value end, nil,
+      { species = mon.species, mon = { species = mon.species }, side = "front", kind = "dex" })
+    if picture == false then return nil, true end -- pending; do not flash a placeholder
+    if picture and picture.typeOf and picture:typeOf("Image") then return picture end
+  end
+  local function resolve(game, subject, animate, context)
     local source = mod.options:get("menu_sprite_source") or "battle_art"
-    if source == "default" or source == "hgss" then return nil end
+    if source == "hgss" then return nil end
     local mon = type(subject) == "table" and subject or { species = subject }
     if not mon.species or mon.isEgg then return nil end
     if source == "crystal" then return crystal(game, mon, animate ~= false) end
-    return battleArt(game, mon, animate ~= false)
+    if source ~= "default" then
+      local selected = battleArt(game, mon, animate ~= false)
+      if selected then return selected end
+    end
+    if context == "dex" then return g9Dex(game, mon) end
   end
 
-  return function(game, subject, animate)
-    local ok, image = pcall(resolve, game, subject, animate)
-    return ok and image or nil
+  return function(game, subject, animate, context)
+    local ok, image, pending = pcall(resolve, game, subject, animate, context)
+    return ok and image or nil, ok and pending == true
   end
 end
