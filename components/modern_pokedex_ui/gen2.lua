@@ -213,10 +213,13 @@ return function(mod)
   end
 
   local function drawFittedPanelPic(menu, row, rect)
-    local image = mod.suite and mod.suite.battlePortrait
-      and mod.suite.battlePortrait(menu.game, row.species)
+    local image, pending
+    if mod.suite and mod.suite.battlePortrait then
+      image, pending = mod.suite.battlePortrait(menu.game, row.species, true, "dex")
+    end
+    if pending then return end
     local authored = image ~= nil
-    image = image or menu:picFor(row.species)
+    if not image then image, authored = menu:picFor(row.species) end
     if not image then return end
     local w, h = image:getDimensions()
     local scale = math.min(1, rect.w / w, rect.h / h)
