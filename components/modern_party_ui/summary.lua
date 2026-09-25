@@ -476,7 +476,7 @@ return function(mod, genderExports, compatibility)
     local species = mon and mon.species
     if not species then return nil, false end
     local selected = mod.suite and mod.suite.battlePortrait
-      and mod.suite.battlePortrait(summary.game, mon)
+      and mod.suite.battlePortrait(summary.game, mon, true, "summary")
     if selected then return selected, true end
     local path, trueColor = Sprites.path(summary.game.data, species, "front",
       { mon = mon, kind = "battle" })
