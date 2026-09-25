@@ -946,11 +946,6 @@ return function(mod, compatibility)
 
   local function drawSprite(game, def, rect, regions, known, colors, faceShade,
       protection)
-    -- Workaround branch: suppress the Pokedex portrait layer entirely.
-    -- Battle/party/follower sprite providers are untouched; this only makes
-    -- the Pokedex sprite well blank so an unwanted fallback texture cannot
-    -- appear behind another portrait renderer.
-    return
     if not known then
       drawCentered("?", rect.x, rect.y + math.floor((rect.h - 8) / 2),
         rect.w, DARK)
