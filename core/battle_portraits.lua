@@ -285,7 +285,7 @@ return function(mod)
       local selected = battleArt(game, mon, animate ~= false)
       if selected then return selected end
     end
-    if context == "dex" then return g9Dex(game, mon) end
+    if context == "dex" or context == "summary" then return g9Dex(game, mon) end
   end
 
   return function(game, subject, animate, context)
