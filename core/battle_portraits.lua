@@ -260,7 +260,7 @@ return function(mod)
         return image(cell)
       end)
   end
-  local function g9Dex(game, mon)
+  local function g9Dex(game, mon, context)
     local id = "g9-battle-sprites"
     if not (mod.find and mod.find(id)) or mon.species == "UNOWN" then return nil end
     local options = game.mods and game.mods.modOptions and game.mods.modOptions[id] or {}
@@ -268,10 +268,15 @@ return function(mod)
     -- G9 bakes its sheets into Images asynchronously, so pokemon.sprite's
     -- path-only API cannot supply them to our custom Dex renderer. Use its
     -- public picture hook, with the same default front box as its native Dex.
-    -- A fresh species-only subject keeps the entry's default form/colour.
+    -- The Dex uses a species-only subject, but the summary already has the
+    -- real Pokemon object. Passing that object prevents G9 from treating the
+    -- summary portrait as an incomplete battle subject and drawing its own
+    -- missing-sprite fallback over the supplied artwork.
+    local subject = { species = mon.species,
+      mon = context == "summary" and mon or { species = mon.species },
+      side = "front", kind = context == "summary" and "battle" or "dex" }
     local picture = require("src.mods.Runtime").call("battle.mon_pic",
-      function(value) return value end, nil,
-      { species = mon.species, mon = { species = mon.species }, side = "front", kind = "dex" })
+      function(value) return value end, nil, subject)
     if picture == false then return nil, true end -- pending; do not flash a placeholder
     if picture and picture.typeOf and picture:typeOf("Image") then return picture end
   end
@@ -285,7 +290,7 @@ return function(mod)
       local selected = battleArt(game, mon, animate ~= false)
       if selected then return selected end
     end
-    if context == "dex" or context == "summary" then return g9Dex(game, mon) end
+    if context == "dex" or context == "summary" then return g9Dex(game, mon, context) end
   end
 
   return function(game, subject, animate, context)
