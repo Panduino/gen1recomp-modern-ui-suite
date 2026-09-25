@@ -1,160 +1,64 @@
+local video
+
 return function(mod)
-  local function loadLocal(relative)
-    local source, readErr = mod:read(relative)
-    assert(source, tostring(readErr or (relative .. " is missing")))
-    local chunk, compileErr = load(source, "@" .. mod.path .. "/" .. relative)
-    assert(chunk, compileErr)
-    return chunk()
+  -- Gen1Recomp's bundled LÖVE build includes love.graphics.newVideo and
+  -- the Theora video backend. Add title.ogv beside this file for the test.
+  local ok, result = pcall(function()
+    return love.graphics.newVideo("title.ogv", { audio = true })
+  end)
+
+  if not ok or not result then
+    mod.log:warn("Title video could not be opened: %s", tostring(result))
+    return
   end
 
-  local components = loadLocal("core/components.lua")
-  local makeSettings = loadLocal("core/settings.lua")
-  local makeScope = loadLocal("core/scope.lua")
-  local makeHub = loadLocal("core/hub.lua")
-  local makeHighlander = loadLocal("core/highlander_qol.lua")
-  local makeRematches = loadLocal("core/highlander_rematches.lua")
-  local makeCrystal = loadLocal("core/highlander_crystal.lua")
-  local settings = makeSettings(mod, components)
-  local state = {
-    componentApis = {},
-    optionsHooks = {},
-    screenTouches = {},
-    bootErrors = {},
-    battlePortrait = loadLocal("core/battle_portraits.lua")(mod),
-    drawMenuIcon = loadLocal("core/menu_icons.lua")(mod),
-    uiSurfaces = loadLocal("core/ui_surfaces.lua")(mod, settings),
-    touch = loadLocal("core/touch.lua")(mod),
-    summaryExtensions = loadLocal("core/summary_extensions.lua")(mod),
-    shinyDex = loadLocal("core/shiny_dex.lua")(mod),
-  }
+  video = result
 
-  -- Validate the complete archive before any component gets a chance to
-  -- register. This keeps a damaged all-in-one install atomic.
-  for _, component in ipairs(components) do
-    local base = "components/" .. component.id .. "/"
-    for _, relative in ipairs(component.files or {}) do
-      local source, readErr = mod:read(base .. relative)
-      assert(source, tostring(readErr or (base .. relative .. " is missing")))
-      local chunk, compileErr = load(source, "@" .. mod.path .. "/" .. base .. relative)
-      assert(chunk, compileErr)
-    end
-    for _, relative in ipairs(component.assets or {}) do
-      local bytes, readErr = mod:read(base .. relative)
-      assert(bytes and #bytes > 0,
-        tostring(readErr or (base .. relative .. " is missing or empty")))
-    end
-  end
+  mod.content.screens:override("TitleState", {
+    new = function(game, opts)
+      local state = {
+        game = game,
+        opts = opts,
+        screenId = "TitleState",
+        isOpaque = true,
+      }
 
-  -- Migration is registered before component lifecycle listeners, so legacy
-  -- preferences are visible by the time their first game.ready work runs.
-  mod.events:on("game.ready", function(event)
-    settings:migrate(event and (event.game or event))
-  end, 10000)
+      function state:enter()
+        if video.rewind then video:rewind() end
+        if video.play then video:play() end
+      end
 
-  local installOrder = {}
-  for index, component in ipairs(components) do installOrder[index] = component end
-  table.sort(installOrder, function(a, b) return a.installOrder < b.installOrder end)
-  for _, component in ipairs(installOrder) do
-    local scope = makeScope(mod, settings, state, component)
-    local installer = scope:load("main.lua")
-    assert(type(installer) == "function",
-      component.id .. "/main.lua must return an installer")
-    installer(scope)
-    if state.bootErrors[component.id] then
-      error(component.id .. " failed to initialize: " .. state.bootErrors[component.id], 0)
-    end
-  end
+      function state:exit()
+        if video.pause then video:pause() end
+      end
 
-  -- Per-category GAME SPEED treats an unmarked overlay as transparent to the
-  -- gameplay state below it. That is useful for dialogue, but it makes a
-  -- replacement menu opened over the overworld inherit OVERWORLD SPEED. The
-  -- suite's controllers already carry stable presentation markers, so claim
-  -- MENU SPEED while one of those controllers (or an unmarked child prompt
-  -- above it) owns the top of the stack. Stop at a newer gameplay boundary so
-  -- a stale menu underneath a battle/overworld can never change its speed.
-  local menuMarkers = {
-    modernStartMenuUI = true,
-    modernUiSuiteComponent = true,
-    modernBagUI = true,
-    modernBagSortMenu = true,
-    modernPCUI = true,
-    __modernBagResponsiveOverlay = true,
-    __modernBagTossPrompts = true,
-    modernPartyUI = true,
-    modernPartySummary = true,
-    modernPartyNaming = true,
-    modernPartyRibbons = true,
-    modernPartyRelearn = true,
-    modernPartyMovesManager = true,
-    modernMoveDetail = true,
-    modernPokedexUI = true,
-    modernPokedexEntry = true,
-    modernPokedexAreaMap = true,
-    modernDexSearchOpen = true,
-    modernDexAreaBridge = true,
-  }
+      function state:update(dt)
+        if video.update then video:update(dt) end
 
-  local screenPrefixes = { mod.id .. ":" }
-  for _, component in ipairs(components) do
-    screenPrefixes[#screenPrefixes + 1] = component.id .. ":"
-  end
-
-  local function suiteMenuInStack(game)
-    local states = game and game.stack and game.stack.states
-    for index = #(states or {}), 1, -1 do
-      local screen = states[index]
-      if type(screen) == "table" then
-        for marker in pairs(menuMarkers) do
-          if screen[marker] == true then return true end
-        end
-        local screenId = screen.screenId
-        if type(screenId) == "string" then
-          for _, prefix in ipairs(screenPrefixes) do
-            if screenId:sub(1, #prefix) == prefix then return true end
+        if game.input:wasPressed("a") or game.input:wasPressed("start") then
+          if self.opts and self.opts.onNewGame then
+            self.opts.onNewGame()
+          end
+        elseif game.input:wasPressed("b") then
+          if self.opts and self.opts.onContinue then
+            self.opts.onContinue()
           end
         end
-        if screen.isBattle or screen.isOverworld then return false end
       end
-    end
-    return false
-  end
 
-  mod.hooks:wrap("core.logic_speed", function(next, game)
-    local inherited = next(game)
-    if not suiteMenuInStack(game) then return inherited end
-    local options = game and game.save and game.save.options
-    local menuSpeed = tonumber(options and options.speedMenu)
-    -- Engines predating independent speed categories have only `speed`.
-    -- Passing through retains their established single-speed behavior.
-    return menuSpeed or inherited
-  end, 1000)
+      function state:draw()
+        local w, h = love.graphics.getDimensions()
+        local vw, vh = video:getDimensions()
+        if vw > 0 and vh > 0 then
+          local scale = math.max(w / vw, h / vh)
+          local dw, dh = vw * scale, vh * scale
+          love.graphics.draw(video, (w - dw) / 2, (h - dh) / 2, 0, scale, scale)
+        end
+      end
 
-  state.comfort = loadLocal("core/comfort.lua")(mod, settings)
-  state.highlander = makeHighlander(mod, settings)
-  state.rematches = makeRematches(mod, state.highlander)
-  state.crystalIntegration = makeCrystal(mod, state.highlander)
-  mod.options:define(settings:aggregateSchema())
-  local hub = makeHub(mod, settings, state, components)
+      return state
+    end,
+  })
 
-  local public = {}
-  for _, component in ipairs(components) do
-    public[component.id] = {
-      version = component.version,
-      enabled = function() return settings:isEnabled(component) end,
-      exports = component.exports,
-    }
-  end
-  mod.exports.highlander = state.highlander
-  mod.exports.rematches = state.rematches
-  mod.exports.crystalIntegration = state.crystalIntegration
-  mod.exports.components = public
-  mod.exports.isEnabled = function(id)
-    local component = settings.byId[id]
-    return component and settings:isEnabled(component) or false
-  end
-  mod.exports.menuPortrait = state.battlePortrait
-  mod.exports.shinyDex = state.shinyDex
-  mod.exports.settings = hub
-  mod.exports.apiVersion = 1
-  mod.log:info(tostring(#components) .. "-component Modern UI Suite initialized")
+  mod.log:info("Title screen video test installed")
 end
